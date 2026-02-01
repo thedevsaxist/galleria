@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:photo_manager_image_provider/photo_manager_image_provider.dart';
 import 'package:uicons/uicons.dart';
-import 'home_controller.dart';
+import '../controller/home_controller.dart';
 
 @RoutePage()
 class HomeScreen extends ConsumerWidget {

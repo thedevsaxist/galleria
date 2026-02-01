@@ -1,7 +1,9 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import 'package:gal/gal.dart';
 import 'package:photo_manager/photo_manager.dart';
+import '../services/supabase_service.dart';
 
 part 'home_controller.g.dart';
 
@@ -13,9 +15,9 @@ class HomeController extends _$HomeController {
   }
 
   Future<List<AssetEntity>> _fetchAssets() async {
-    final PermissionState ps = await PhotoManager.requestPermissionExtend();
-    if (!ps.isAuth) {
-      if (ps.hasAccess) {
+    final PermissionState permissionState = await PhotoManager.requestPermissionExtend();
+    if (!permissionState.isAuth) {
+      if (permissionState.hasAccess) {
         // Access is granted (limited or full)
       } else {
         return [];
@@ -25,11 +27,7 @@ class HomeController extends _$HomeController {
     // Fetch albums
     final List<AssetPathEntity> albums = await PhotoManager.getAssetPathList(
       type: RequestType.image,
-      filterOption: FilterOptionGroup(
-        orders: [
-          const OrderOption(type: OrderOptionType.createDate, asc: false),
-        ],
-      ),
+      filterOption: FilterOptionGroup(orders: [const OrderOption(type: OrderOptionType.createDate, asc: false)]),
     );
 
     // Find 'Galleria' album
@@ -49,10 +47,7 @@ class HomeController extends _$HomeController {
 
     // Fetch assets from the album
     final int assetCount = await galleriaAlbum.assetCountAsync;
-    final List<AssetEntity> assets = await galleriaAlbum.getAssetListRange(
-      start: 0,
-      end: assetCount,
-    );
+    final List<AssetEntity> assets = await galleriaAlbum.getAssetListRange(start: 0, end: assetCount);
 
     return assets;
   }
@@ -70,6 +65,11 @@ class HomeController extends _$HomeController {
       }
 
       await Gal.putImage(image.path, album: 'Galleria');
+
+      // Upload to Supabase
+      final file = File(image.path);
+      final fileName = 'galleria_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      await ref.read(supabaseServiceProvider).uploadImage(file, fileName);
 
       // Refresh the list of assets
       ref.invalidateSelf();
