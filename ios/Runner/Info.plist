@@ -41,6 +41,14 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Galleria needs camera access to take photos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Galleria needs photo library access to select photos.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Galleria needs microphone access for video.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Galleria needs access to save photos to your gallery.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
