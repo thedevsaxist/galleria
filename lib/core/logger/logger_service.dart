@@ -17,9 +17,9 @@ class LoggerService {
         methodCount: 0,
         errorMethodCount: 5,
         lineLength: 80,
-        colors: true,
+        colors: false,
         printEmojis: true,
-        dateTimeFormat: DateTimeFormat.dateAndTime,
+        dateTimeFormat: DateTimeFormat.none,
       ),
 
       level: Level.error,

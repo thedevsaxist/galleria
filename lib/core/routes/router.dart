@@ -9,18 +9,14 @@ part 'router.g.dart';
 class AppRouter extends RootStackRouter {
   @override
   RouteType get defaultRouteType {
-    return RouteType.custom(
-      transitionsBuilder: TransitionsBuilders.noTransition,
-    );
+    return RouteType.custom(transitionsBuilder: TransitionsBuilders.noTransition);
   }
 
   @override
-  List<AutoRoute> get routes => [
-    AutoRoute(path: Routes.homeRoute, page: HomeRoute.page),
-  ];
+  List<AutoRoute> get routes => [AutoRoute(path: Routes.homeRoute, page: HomeRoute.page, initial: true)];
 }
 
-@riverpod 
+@riverpod
 AppRouter appRouter(_) {
   return AppRouter();
 }

@@ -1,6 +1,6 @@
+import 'package:galleria/core/logger/logger_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 import 'package:gal/gal.dart';
 import 'package:photo_manager/photo_manager.dart';
 import '../services/supabase_service.dart';
@@ -8,9 +8,39 @@ import '../services/supabase_service.dart';
 part 'home_controller.g.dart';
 
 @riverpod
+class SelectedAssets extends _$SelectedAssets {
+  @override
+  Set<AssetEntity> build() {
+    return {};
+  }
+
+  void toggle(AssetEntity asset) {
+    if (state.contains(asset)) {
+      state = {...state}..remove(asset);
+    } else {
+      state = {...state, asset};
+    }
+  }
+
+  void selectAll(List<AssetEntity> assets) {
+    state = {...assets};
+  }
+
+  void clear() {
+    state = {};
+  }
+
+  bool isSelected(AssetEntity asset) {
+    return state.contains(asset);
+  }
+}
+
+@riverpod
 class HomeController extends _$HomeController {
+  late final LoggerService _loggerService;
   @override
   FutureOr<List<AssetEntity>> build() async {
+    _loggerService = ref.watch(loggerServiceProvider);
     return _fetchAssets();
   }
 
@@ -66,14 +96,39 @@ class HomeController extends _$HomeController {
 
       await Gal.putImage(image.path, album: 'Galleria');
 
-      // Upload to Supabase
-      final file = File(image.path);
-      final fileName = 'galleria_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      await ref.read(supabaseServiceProvider).uploadImage(file, fileName);
-
       // Refresh the list of assets
       ref.invalidateSelf();
     } catch (e) {
+      _loggerService.e('Error uploading image: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> uploadAssets(List<AssetEntity> assets) async {
+    if (assets.isEmpty) return;
+
+    // Show some loading state if needed, or rely on UI to show it?
+    // For now, we just upload sequentially or in parallel.
+
+    try {
+      // Future.wait for parallel upload
+      await Future.wait(
+        assets.map((asset) async {
+          final file = await asset.file;
+          if (file != null) {
+            final fileName = 'galleria_${asset.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+            await ref.read(supabaseServiceProvider).uploadImage(file, fileName);
+          }
+        }),
+      );
+
+      _loggerService.i('Uploaded ${assets.length} images successfully');
+
+      // Clear selection after successful upload
+      ref.read(selectedAssetsProvider.notifier).clear();
+    } catch (e) {
+      _loggerService.e('Error uploading assets: $e');
+      // Handle error (maybe show snackbar in UI via listener)
       rethrow;
     }
   }
