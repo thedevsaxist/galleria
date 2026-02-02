@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:gal/gal.dart';
 import 'package:photo_manager/photo_manager.dart';
 import '../services/supabase_service.dart';
+import '../models/galleria_asset.dart';
 
 part 'home_controller.g.dart';
 
@@ -36,12 +37,42 @@ class SelectedAssets extends _$SelectedAssets {
 }
 
 @riverpod
+class UploadedAssets extends _$UploadedAssets {
+  late final SupabaseService _supabaseService;
+
+  @override
+  FutureOr<Set<String>> build() async {
+    _supabaseService = ref.watch(supabaseServiceProvider);
+    try {
+      final ids = await _supabaseService.getUploadedAssetIds();
+      return ids.toSet();
+    } catch (e) {
+      return {};
+    }
+  }
+
+  void markMultipleAsUploaded(Iterable<String> ids) {
+    state.whenData((current) {
+      state = AsyncData({...current, ...ids});
+    });
+  }
+}
+
+@riverpod
 class HomeController extends _$HomeController {
   late final LoggerService _loggerService;
+
   @override
-  FutureOr<List<AssetEntity>> build() async {
+  FutureOr<List<GalleriaAsset>> build() async {
     _loggerService = ref.watch(loggerServiceProvider);
-    return _fetchAssets();
+
+    // Watch uploaded assets to trigger rebuild when cloud status changes
+    final uploadedIds = await ref.watch(uploadedAssetsProvider.future);
+    final assets = await _fetchAssets();
+
+    return assets
+        .map((asset) => GalleriaAsset(asset: asset, id: asset.id, isUploaded: uploadedIds.contains(asset.id)))
+        .toList();
   }
 
   Future<List<AssetEntity>> _fetchAssets() async {
@@ -69,17 +100,19 @@ class HomeController extends _$HomeController {
       }
     }
 
-    // If 'Galleria' doesn't exist (or we can't find it), return empty list
     if (galleriaAlbum == null) {
-      // It's possible the album doesn't exist yet if no photos are saved.
       return [];
     }
 
-    // Fetch assets from the album
     final int assetCount = await galleriaAlbum.assetCountAsync;
     final List<AssetEntity> assets = await galleriaAlbum.getAssetListRange(start: 0, end: assetCount);
 
     return assets;
+  }
+
+  String _sanitizeId(String id) {
+    // Replace characters that cause issues in paths (like / on iOS) or parsing (like _)
+    return id.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '-');
   }
 
   Future<void> pickImage() async {
@@ -95,11 +128,9 @@ class HomeController extends _$HomeController {
       }
 
       await Gal.putImage(image.path, album: 'Galleria');
-
-      // Refresh the list of assets
       ref.invalidateSelf();
     } catch (e) {
-      _loggerService.e('Error uploading image: $e');
+      _loggerService.e('Error capturing image: $e');
       rethrow;
     }
   }
@@ -107,28 +138,47 @@ class HomeController extends _$HomeController {
   Future<void> uploadAssets(List<AssetEntity> assets) async {
     if (assets.isEmpty) return;
 
-    // Show some loading state if needed, or rely on UI to show it?
-    // For now, we just upload sequentially or in parallel.
-
     try {
-      // Future.wait for parallel upload
+      final List<String> successfulIds = [];
+      final supabase = ref.read(supabaseServiceProvider);
+
       await Future.wait(
         assets.map((asset) async {
           final file = await asset.file;
           if (file != null) {
-            final fileName = 'galleria_${asset.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-            await ref.read(supabaseServiceProvider).uploadImage(file, fileName);
+            final sanitizedId = _sanitizeId(asset.id);
+            // Deterministic filename: galleria_{sanitizedId}.jpg
+            // We use the ID as the unique identifier in storage.
+            final fileName = 'galleria_$sanitizedId.jpg';
+
+            // Upload with metadata as requested
+            await supabase.uploadImage(
+              file,
+              fileName,
+              metadata: {
+                'localId': asset.id,
+                'originalName': asset.title ?? 'unknown',
+                'uploadedAt': DateTime.now().toIso8601String(),
+              },
+            );
+
+            // Record in DB for efficient tracking (avoids listing bucket)
+            await supabase.recordAssetUpload(asset.id, fileName);
+
+            successfulIds.add(asset.id);
           }
         }),
       );
 
       _loggerService.i('Uploaded ${assets.length} images successfully');
 
-      // Clear selection after successful upload
+      // Update uploaded status in cloud tracker
+      ref.read(uploadedAssetsProvider.notifier).markMultipleAsUploaded(successfulIds);
+
+      // Clear selection
       ref.read(selectedAssetsProvider.notifier).clear();
     } catch (e) {
       _loggerService.e('Error uploading assets: $e');
-      // Handle error (maybe show snackbar in UI via listener)
       rethrow;
     }
   }

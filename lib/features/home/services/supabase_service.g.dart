@@ -49,4 +49,4 @@ final class SupabaseServiceProvider
   }
 }
 
-String _$supabaseServiceHash() => r'0ab2bbb49962209d51c4a4f4e7026f3ff62adca3';
+String _$supabaseServiceHash() => r'd0ecd52cc850280185393cd2032e482a71b03b27';

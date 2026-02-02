@@ -1,3 +1,4 @@
+import 'package:galleria/features/home/models/galleria_asset.dart';
 import 'package:flutter/material.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -44,7 +45,7 @@ class HomeScreen extends ConsumerWidget {
           IconButton(
             icon: Icon(UIcons.regularRounded.cloud_upload, color: Colors.black),
             onPressed: () async {
-              final assets = assetsAsync.value ?? [];
+              final List<GalleriaAsset> assets = assetsAsync.value ?? [];
               final selectedList = selectedAssets.toList();
               final isSelectionMode = selectedList.isNotEmpty;
 
@@ -57,7 +58,9 @@ class HomeScreen extends ConsumerWidget {
               final content = isSelectionMode
                   ? "Are you sure you want to upload ${selectedList.length} selected images?"
                   : "Are you sure you want to upload all images?";
-              final assetsToUpload = isSelectionMode ? selectedList : assets;
+              final assetsToUpload = isSelectionMode
+                  ? selectedList
+                  : assets.map((GalleriaAsset ga) => ga.asset).toList();
 
               final confirmed = await showDialog<bool>(
                 context: context,
@@ -88,8 +91,8 @@ class HomeScreen extends ConsumerWidget {
         ],
       ),
       body: assetsAsync.when(
-        data: (assets) {
-          if (assets.isEmpty) {
+        data: (List<GalleriaAsset> galleriaAssets) {
+          if (galleriaAssets.isEmpty) {
             return Center(child: Icon(UIcons.regularRounded.folder, size: 120, color: Colors.grey));
           }
           return GridView.builder(
@@ -99,17 +102,19 @@ class HomeScreen extends ConsumerWidget {
               crossAxisSpacing: 8,
               mainAxisSpacing: 8,
             ),
-            itemCount: assets.length,
+            itemCount: galleriaAssets.length,
             itemBuilder: (context, index) {
-              final asset = assets[index];
+              final GalleriaAsset galleriaAsset = galleriaAssets[index];
+              final asset = galleriaAsset.asset;
               final isSelected = selectedAssets.contains(asset);
+              final isUploaded = galleriaAsset.isUploaded;
 
               return GestureDetector(
                 onLongPress: () {
                   ref.read(selectedAssetsProvider.notifier).toggle(asset);
                 },
                 onTap: () {
-                  if (isSelectionMode) {
+                  if (isSelected || isSelectionMode) {
                     ref.read(selectedAssetsProvider.notifier).toggle(asset);
                   } else {
                     // Open image viewer or do nothing
@@ -124,6 +129,19 @@ class HomeScreen extends ConsumerWidget {
                       thumbnailSize: const ThumbnailSize.square(200),
                       fit: BoxFit.cover,
                     ),
+                    if (isUploaded)
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.85),
+                            borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(8)),
+                          ),
+                          child: const Icon(Icons.check, color: Colors.white, size: 14),
+                        ),
+                      ),
                     if (isSelected)
                       Container(
                         color: Colors.black45,

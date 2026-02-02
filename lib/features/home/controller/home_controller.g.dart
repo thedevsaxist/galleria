@@ -61,11 +61,55 @@ abstract class _$SelectedAssets extends $Notifier<Set<AssetEntity>> {
   }
 }
 
+@ProviderFor(UploadedAssets)
+final uploadedAssetsProvider = UploadedAssetsProvider._();
+
+final class UploadedAssetsProvider
+    extends $AsyncNotifierProvider<UploadedAssets, Set<String>> {
+  UploadedAssetsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'uploadedAssetsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$uploadedAssetsHash();
+
+  @$internal
+  @override
+  UploadedAssets create() => UploadedAssets();
+}
+
+String _$uploadedAssetsHash() => r'9cee7769727199dbedad622c2df0e9586d31402e';
+
+abstract class _$UploadedAssets extends $AsyncNotifier<Set<String>> {
+  FutureOr<Set<String>> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<Set<String>>, Set<String>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<Set<String>>, Set<String>>,
+              AsyncValue<Set<String>>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(HomeController)
 final homeControllerProvider = HomeControllerProvider._();
 
 final class HomeControllerProvider
-    extends $AsyncNotifierProvider<HomeController, List<AssetEntity>> {
+    extends $AsyncNotifierProvider<HomeController, List<GalleriaAsset>> {
   HomeControllerProvider._()
     : super(
         from: null,
@@ -85,20 +129,20 @@ final class HomeControllerProvider
   HomeController create() => HomeController();
 }
 
-String _$homeControllerHash() => r'e765081ee29768fed811085d910011acaebda90f';
+String _$homeControllerHash() => r'df9a536850477e314e79b59a19719e0ff48f213b';
 
-abstract class _$HomeController extends $AsyncNotifier<List<AssetEntity>> {
-  FutureOr<List<AssetEntity>> build();
+abstract class _$HomeController extends $AsyncNotifier<List<GalleriaAsset>> {
+  FutureOr<List<GalleriaAsset>> build();
   @$mustCallSuper
   @override
   void runBuild() {
     final ref =
-        this.ref as $Ref<AsyncValue<List<AssetEntity>>, List<AssetEntity>>;
+        this.ref as $Ref<AsyncValue<List<GalleriaAsset>>, List<GalleriaAsset>>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<AsyncValue<List<AssetEntity>>, List<AssetEntity>>,
-              AsyncValue<List<AssetEntity>>,
+              AnyNotifier<AsyncValue<List<GalleriaAsset>>, List<GalleriaAsset>>,
+              AsyncValue<List<GalleriaAsset>>,
               Object?,
               Object?
             >;
