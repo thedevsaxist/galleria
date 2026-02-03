@@ -85,7 +85,7 @@ final class UploadedAssetsProvider
   UploadedAssets create() => UploadedAssets();
 }
 
-String _$uploadedAssetsHash() => r'9cee7769727199dbedad622c2df0e9586d31402e';
+String _$uploadedAssetsHash() => r'e4fff789951ec13ffc53ac937902a69a157d0f2e';
 
 abstract class _$UploadedAssets extends $AsyncNotifier<Set<String>> {
   FutureOr<Set<String>> build();
@@ -129,7 +129,7 @@ final class HomeControllerProvider
   HomeController create() => HomeController();
 }
 
-String _$homeControllerHash() => r'df9a536850477e314e79b59a19719e0ff48f213b';
+String _$homeControllerHash() => r'07d83b84ccac67a67c4738b16c399d73d3c82824';
 
 abstract class _$HomeController extends $AsyncNotifier<List<GalleriaAsset>> {
   FutureOr<List<GalleriaAsset>> build();

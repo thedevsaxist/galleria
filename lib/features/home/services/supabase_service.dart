@@ -3,6 +3,7 @@ import 'package:galleria/core/logger/logger_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/constants/supabase_constants.dart';
+import '../models/metadata.dart';
 
 part 'supabase_service.g.dart';
 
@@ -19,7 +20,7 @@ class SupabaseService {
   final SupabaseClient _supabaseClient;
   SupabaseService(this._loggerService, this._supabaseClient);
 
-  Future<String?> uploadImage(File file, String fileName, {Map<String, String>? metadata}) async {
+  Future<String?> uploadImage(File file, String fileName, {GalleriaMetadata? metadata}) async {
     try {
       final bytes = await file.readAsBytes();
       await _supabaseClient.storage
@@ -27,7 +28,12 @@ class SupabaseService {
           .uploadBinary(
             fileName,
             bytes,
-            fileOptions: FileOptions(cacheControl: '3600', upsert: true, contentType: 'image/jpeg', metadata: metadata),
+            fileOptions: FileOptions(
+              cacheControl: '3600',
+              upsert: true,
+              contentType: 'image/jpeg',
+              metadata: metadata?.toSupabaseMetadata(),
+            ),
           );
 
       return _supabaseClient.storage.from(SupabaseConstants.bucketName).getPublicUrl(fileName);

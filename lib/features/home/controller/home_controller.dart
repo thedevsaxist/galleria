@@ -5,6 +5,7 @@ import 'package:gal/gal.dart';
 import 'package:photo_manager/photo_manager.dart';
 import '../services/supabase_service.dart';
 import '../models/galleria_asset.dart';
+import '../models/metadata.dart';
 
 part 'home_controller.g.dart';
 
@@ -60,11 +61,11 @@ class UploadedAssets extends _$UploadedAssets {
 
 @riverpod
 class HomeController extends _$HomeController {
-  late final LoggerService _loggerService;
+  LoggerService? _loggerService;
 
   @override
   FutureOr<List<GalleriaAsset>> build() async {
-    _loggerService = ref.watch(loggerServiceProvider);
+    _loggerService = await ref.watch(loggerServiceProvider);
 
     // Watch uploaded assets to trigger rebuild when cloud status changes
     final uploadedIds = await ref.watch(uploadedAssetsProvider.future);
@@ -130,7 +131,7 @@ class HomeController extends _$HomeController {
       await Gal.putImage(image.path, album: 'Galleria');
       ref.invalidateSelf();
     } catch (e) {
-      _loggerService.e('Error capturing image: $e');
+      _loggerService?.e('Error capturing image: $e');
       rethrow;
     }
   }
@@ -151,16 +152,15 @@ class HomeController extends _$HomeController {
             // We use the ID as the unique identifier in storage.
             final fileName = 'galleria_$sanitizedId.jpg';
 
-            // Upload with metadata as requested
-            await supabase.uploadImage(
-              file,
-              fileName,
-              metadata: {
-                'localId': asset.id,
-                'originalName': asset.title ?? 'unknown',
-                'uploadedAt': DateTime.now().toIso8601String(),
-              },
+            // Create metadata using the new freezed model
+            final metadata = GalleriaMetadata(
+              localId: asset.id,
+              originalName: asset.title ?? 'unknown',
+              uploadedAt: DateTime.now().toIso8601String(),
             );
+
+            // Upload with metadata as requested
+            await supabase.uploadImage(file, fileName, metadata: metadata);
 
             // Record in DB for efficient tracking (avoids listing bucket)
             await supabase.recordAssetUpload(asset.id, fileName);
@@ -170,7 +170,7 @@ class HomeController extends _$HomeController {
         }),
       );
 
-      _loggerService.i('Uploaded ${assets.length} images successfully');
+      _loggerService?.i('Uploaded ${assets.length} images successfully');
 
       // Update uploaded status in cloud tracker
       ref.read(uploadedAssetsProvider.notifier).markMultipleAsUploaded(successfulIds);
@@ -178,7 +178,7 @@ class HomeController extends _$HomeController {
       // Clear selection
       ref.read(selectedAssetsProvider.notifier).clear();
     } catch (e) {
-      _loggerService.e('Error uploading assets: $e');
+      _loggerService?.e('Error uploading assets: $e');
       rethrow;
     }
   }
