@@ -3,7 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:gal/gal.dart';
 import 'package:photo_manager/photo_manager.dart';
-import '../services/supabase_service.dart';
+import '../client/supabase_service.dart';
 import '../models/galleria_asset.dart';
 import '../models/metadata.dart';
 
