@@ -26,6 +26,7 @@ dependencies:
   flutter_screenutil: ^5.9.3
   freezed_annotation: ^3.1.0
   json_annotation: ^4.9.0
+  geocoding: ^4.0.0
 
 dev_dependencies:
   flutter_test:

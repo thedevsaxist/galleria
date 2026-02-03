@@ -129,7 +129,7 @@ final class HomeControllerProvider
   HomeController create() => HomeController();
 }
 
-String _$homeControllerHash() => r'07d83b84ccac67a67c4738b16c399d73d3c82824';
+String _$homeControllerHash() => r'8891e5ef8256018385a5db262529f1172776efa3';
 
 abstract class _$HomeController extends $AsyncNotifier<List<GalleriaAsset>> {
   FutureOr<List<GalleriaAsset>> build();

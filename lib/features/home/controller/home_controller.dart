@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:gal/gal.dart';
 import 'package:photo_manager/photo_manager.dart';
 import '../client/supabase_service.dart';
+import 'package:geocoding/geocoding.dart';
 import '../models/galleria_asset.dart';
 import '../models/metadata.dart';
 
@@ -152,11 +153,40 @@ class HomeController extends _$HomeController {
             // We use the ID as the unique identifier in storage.
             final fileName = 'galleria_$sanitizedId.jpg';
 
+            String? address;
+            if ((asset.latitude ?? 0.0) != 0.0 && (asset.longitude ?? 0.0) != 0.0) {
+              try {
+                // Determine address from coordinates
+                List<Placemark> placemarks = await placemarkFromCoordinates(
+                  asset.latitude ?? 0.0,
+                  asset.longitude ?? 0.0,
+                );
+                if (placemarks.isNotEmpty) {
+                  final place = placemarks.first;
+                  // Construct a readable address: e.g., "Main St, San Francisco, CA, USA"
+                  address = [
+                    place.street,
+                    place.locality,
+                    place.administrativeArea,
+                    place.country,
+                  ].where((element) => element != null && element.isNotEmpty).join(', ');
+                }
+              } catch (e) {
+                // Ignore geocoding errors, just address stays null
+                _loggerService?.w('Geocoding failed for asset ${asset.id}: $e');
+              }
+            }
+
             // Create metadata using the new freezed model
             final metadata = GalleriaMetadata(
               localId: asset.id,
               originalName: asset.title ?? 'unknown',
               uploadedAt: DateTime.now().toIso8601String(),
+              takenAt: asset.createDateTime,
+              latitude: asset.latitude != 0.0 ? asset.latitude : null,
+              longitude: asset.longitude != 0.0 ? asset.longitude : null,
+              address: address,
+              localPath: file.path,
             );
 
             // Upload with metadata as requested
