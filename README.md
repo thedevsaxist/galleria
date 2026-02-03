@@ -17,13 +17,17 @@ The app follows **Clean Architecture** principles with a feature-first structure
 ```
 lib/
 ├── core/                    # Core utilities and shared resources
-│   ├── router/             # Auto-route navigation
+│   ├── routes/             # Auto-route navigation
 │   ├── logger/              # App logging
 │   └── constants/            # Shared constants
 ├── features/               # Feature modules
-│   └── home/              # Home screen
-├── galleria.dart          # core app configuration
-└── main.dart              # App entry point
+│   └── home/              # Home screen feature
+│       ├── client/        # Data sources / API clients
+│       ├── controller/    # State management logic
+│       ├── models/        # Data models
+│       └── screens/       # UI Screens
+├── galleria.dart          # Core app widget
+└── main.dart              # Entry point & initialization
 ```
 
 ### State Management
@@ -99,6 +103,7 @@ lib/
 3. **Set up environment variables**
    
    Create a `.env` file in the root directory:
+   ```env
    SUPABASE_URL=your_supabase_url
    SUPABASE_ANON_KEY=your_supabase_anon_key
    SUPABASE_BUCKET_NAME=your_storage_bucket_name
@@ -108,7 +113,7 @@ lib/
 4. **Run code generation**
    ```bash
    flutter pub run build_runner build --delete-conflicting-outputs
-   
+   ```
 
 5. **Run the app**
    ```bash
@@ -180,6 +185,12 @@ flutter build ios --release
 ## 🔒 Security
 
 - Environment variables for API keys
+
+## ⚠️ Technical Debt
+
+According to the technical requirements, the only features not included are:
+- Scheduled sync
+- Local storage of photo metadata
 
 ##  Contributors
 
